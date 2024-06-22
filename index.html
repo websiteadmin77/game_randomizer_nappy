@@ -7,12 +7,24 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url('e7394af6b32d1bbc70ffe81cceb6a50d.jpg'); /* Reference to local image file */
+            background-size: cover;
+            background-position: center;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
         }
         .game-mode {
-            margin-bottom: 20px;
-        }
-        .players {
             margin-bottom: 20px;
         }
         .player {
@@ -22,21 +34,27 @@
             margin-top: 20px;
             font-weight: bold;
         }
+        button {
+            margin: 5px;
+        }
     </style>
 </head>
 <body>
-<h1>Game Randomizer</h1>
-<div class="game-mode">
-    <label for="mode">Select Game Mode:</label>
-    <select id="mode" onchange="updatePlayerInputs()">
-        <option value="1v1">1 player versus 1 player</option>
-        <option value="2v2">2 players versus 2 players</option>
-        <option value="3v3">3 players versus 3 players</option>
-    </select>
+<div class="container">
+    <h1>Game Randomizer</h1>
+    <div class="game-mode">
+        <label for="mode">Select Game Mode:</label>
+        <select id="mode" onchange="updatePlayerInputs()">
+            <option value="1v1">1 player versus 1 player</option>
+            <option value="2v2">2 players versus 2 players</option>
+            <option value="3v3">3 players versus 3 players</option>
+        </select>
+    </div>
+    <div id="players"></div>
+    <button onclick="randomize()">Randomize!</button>
+    <button id="revengeButton" onclick="revenge()" disabled>Revenge!</button>
+    <div class="result" id="result"></div>
 </div>
-<div class="players" id="players"></div>
-<button onclick="randomize()">Randomize!</button>
-<div class="result" id="result"></div>
 
 <script>
     const factions = [
@@ -51,8 +69,12 @@
         "Syrian Ridge", "Tabuk Mesa"
     ];
 
+    let playerNames = [];
+    let randomizedTeams = [];
+    let mode = '1v1';
+
     function updatePlayerInputs() {
-        const mode = document.getElementById('mode').value;
+        mode = document.getElementById('mode').value;
         const playersDiv = document.getElementById('players');
         playersDiv.innerHTML = '';
 
@@ -76,25 +98,30 @@
         }
     }
 
-    function randomize() {
-        const resultDiv = document.getElementById('result');
-        const mode = document.getElementById('mode').value;
-        let numPlayers;
-
-        if (mode === '1v1') {
-            numPlayers = 2;
-        } else if (mode === '2v2') {
-            numPlayers = 4;
-        } else if (mode === '3v3') {
-            numPlayers = 6;
-        }
-
-        const playerNames = [];
+    function getPlayerNames() {
+        playerNames = [];
+        const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
         for (let i = 0; i < numPlayers; i++) {
             const playerName = document.getElementById(`player${i + 1}`).value;
             playerNames.push(playerName);
         }
+    }
 
+    function randomize() {
+        getPlayerNames();
+        shuffle(playerNames);
+        randomizedTeams = [...playerNames];
+        displayResults();
+        document.getElementById('revengeButton').disabled = false;
+    }
+
+    function revenge() {
+        displayResults();
+    }
+
+    function displayResults() {
+        const resultDiv = document.getElementById('result');
+        const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
         const randomMap = maps[Math.floor(Math.random() * maps.length)];
         const selectedFactions = [];
 
@@ -104,11 +131,22 @@
         }
 
         let resultText = `Randomized Map: ${randomMap}\n\n`;
-        for (let i = 0; i < numPlayers; i++) {
-            resultText += `Player ${i + 1} (${playerNames[i]}): ${selectedFactions[i]}\n`;
+        for (let i = 0; i < numPlayers / 2; i++) {
+            resultText += `Team 1 - Player ${i + 1} (${randomizedTeams[i]}): ${selectedFactions[i]}\n`;
+        }
+        resultText += `\n`;
+        for (let i = numPlayers / 2; i < numPlayers; i++) {
+            resultText += `Team 2 - Player ${i + 1} (${randomizedTeams[i]}): ${selectedFactions[i]}\n`;
         }
 
         resultDiv.innerText = resultText;
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
     }
 
     // Initialize player inputs for the default game mode
