@@ -12,7 +12,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-image: url('dc4e7542/e7394af6b32d1bbc70ffe81cceb6a50d.jpg'); /* Reference to local image file */
+            background-image: url('e7394af6b32d1bbc70ffe81cceb6a50d.jpg');
             background-size: cover;
             background-position: center;
         }
@@ -116,6 +116,11 @@
         }
 
         function revenge() {
+            const team1 = randomizedTeams.slice(0, randomizedTeams.length / 2);
+            const team2 = randomizedTeams.slice(randomizedTeams.length / 2);
+            shuffle(team1);
+            shuffle(team2);
+            randomizedTeams = [...team1, ...team2];
             displayResults(randomizedTeams);
         }
 
