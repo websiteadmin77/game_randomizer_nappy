@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Randomizer</title>
+    <title>Napoleon Total War - Full Randomizer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,7 +12,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-image: url('e7394af6b32d1bbc70ffe81cceb6a50d.jpg');
+            background-image: url('e7394af6b32d1bbc70ffe81cceb6a50d.jpg'); /* Reference to local image file */
             background-size: cover;
             background-position: center;
         }
@@ -34,129 +34,206 @@
             margin-top: 20px;
             font-weight: bold;
         }
+        .map-image, .winning-zones {
+            margin-top: 20px;
+        }
+        .winning-zones img {
+            display: none;
+            max-width: 100%;
+            margin-top: 10px;
+        }
         button {
             margin: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Game Randomizer</h1>
-        <div class="game-mode">
-            <label for="mode">Select Game Mode:</label>
-            <select id="mode" onchange="updatePlayerInputs()">
-                <option value="1v1">1 player versus 1 player</option>
-                <option value="2v2">2 players versus 2 players</option>
-                <option value="3v3">3 players versus 3 players</option>
-            </select>
-        </div>
-        <div id="players"></div>
-        <button onclick="randomize()">Randomize!</button>
-        <button id="revengeButton" onclick="revenge()" disabled>Revenge!</button>
-        <div class="result" id="result"></div>
+<div class="container">
+    <h1>Napoleon Total War - Randomizer</h1>
+    <div class="game-mode">
+        <label for="mode">Select Game Mode:</label>
+        <select id="mode" onchange="updatePlayerInputs()">
+            <option value="1v1">1 player versus 1 player</option>
+            <option value="2v2">2 players versus 2 players</option>
+            <option value="3v3">3 players versus 3 players</option>
+        </select>
     </div>
+    <div id="players"></div>
+    <button onclick="randomize()">Randomize!</button>
+    <button id="revengeButton" onclick="revenge()" disabled>Revenge!</button>
+    <button id="copyButton" onclick="copyTeams()" disabled>Copy teams</button>
+    <div class="result" id="result"></div>
+    <div class="map-image" id="mapImage"></div>
+    <button id="winningZonesButton" onclick="showWinningZones()" disabled>Check winning zones for this map!</button>
+    <div class="winning-zones" id="winningZones"></div>
+</div>
 
-    <script>
-        const factions = [
-            "France", "Spain", "Great Britain", "Portugal", "Sweden", "Ottoman Empire", 
-            "Denmark", "Austria", "Russia", "Prussia", "Netherlands"
-        ];
-        const maps = [
-            "Amazon Confluence", "Aosta Valley", "Arid Cliffs", "Austrian Pinnacle", 
-            "Galician Ria", "Grassy Flatlands", "Homestead", "Italian Grassland", 
-            "Prussian Hills", "Pyramids", "Pyrenees Peak", "Salamanca Province", 
-            "Savoy Hilltop", "Siberian Plateau", "Spanish Lakeside", "Sunken Jungle", 
-            "Syrian Ridge", "Tabuk Mesa"
-        ];
+<script>
+    const factions = [
+        "France", "Spain", "Great Britain", "Portugal", "Sweden", "Ottoman Empire",
+        "Denmark", "Austria", "Russia", "Prussia", "Netherlands"
+    ];
+    const maps = [
+        "Amazon Confluence", "Aosta Valley", "Arid Cliffs", "Austrian Pinnacle",
+        "Galician Ria", "Grassy Flatlands", "Homestead", "Italian Grassland",
+        "Prussian Hills", "Pyramids", "Pyrenees Peak", "Salamanca Province",
+        "Savoy Hilltop", "Siberian Plateau", "Spanish Lakeside", "Sunken Jungle",
+        "Syrian Ridge", "Tabuk Mesa"
+    ];
+    const mapImages = {
+        "Amazon Confluence": "amazon-confluence.jpg",
+        "Aosta Valley": "aosta-valley.jpg",
+        "Arid Cliffs": "arid-cliffs.jpg",
+        "Austrian Pinnacle": "austrian-pinnacle.jpg",
+        "Galician Ria": "galician-ria.jpg",
+        "Grassy Flatlands": "grassy-flatlands.jpg",
+        "Homestead": "homestead.jpg",
+        "Italian Grassland": "italian-grassland.jpg",
+        "Prussian Hills": "prussian-hills.jpg",
+        "Pyramids": "pyramids.jpg",
+        "Pyrenees Peak": "pyrenees-peak.jpg",
+        "Salamanca Province": "salamanca-province.jpg",
+        "Savoy Hilltop": "savoy-hilltop.jpg",
+        "Siberian Plateau": "siberian-plateau.jpg",
+        "Spanish Lakeside": "spanish-lakeside.jpg",
+        "Sunken Jungle": "sunken-jungle.jpg",
+        "Syrian Ridge": "syrian-ridge.jpg",
+        "Tabuk Mesa": "tabuk-mesa.jpg"
+    };
+    const winningZoneImages = {
+        "Amazon Confluence": "amazon-confluence-zones.jpg",
+        "Aosta Valley": "aosta-valley-zones.jpg",
+        "Arid Cliffs": "arid-cliffs-zones.jpg",
+        "Austrian Pinnacle": "austrian-pinnacle-zones.jpg",
+        "Galician Ria": "galician-ria-zones.jpg",
+        "Grassy Flatlands": "grassy-flatlands-zones.jpg",
+        "Homestead": "homestead-zones.jpg",
+        "Italian Grassland": "italian-grassland-zones.jpg",
+        "Prussian Hills": "prussian-hills-zones.jpg",
+        "Pyramids": "pyramids-zones.jpg",
+        "Pyrenees Peak": "pyrenees-peak-zones.jpg",
+        "Salamanca Province": "salamanca-province-zones.jpg",
+        "Savoy Hilltop": "savoy-hilltop-zones.jpg",
+        "Siberian Plateau": "siberian-plateau-zones.jpg",
+        "Spanish Lakeside": "spanish-lakeside-zones.jpg",
+        "Sunken Jungle": "sunken-jungle-zones.jpg",
+        "Syrian Ridge": "syrian-ridge-zones.jpg",
+        "Tabuk Mesa": "tabuk-mesa-zones.jpg"
+    };
 
-        let playerNames = [];
-        let randomizedTeams = [];
-        let mode = '1v1';
+    let playerNames = [];
+    let randomizedTeams = [];
+    let mode = '1v1';
 
-        function updatePlayerInputs() {
-            mode = document.getElementById('mode').value;
-            const playersDiv = document.getElementById('players');
-            playersDiv.innerHTML = '';
+    function updatePlayerInputs() {
+        mode = document.getElementById('mode').value;
+        const playersDiv = document.getElementById('players');
+        playersDiv.innerHTML = '';
 
-            let numPlayers;
-            if (mode === '1v1') {
-                numPlayers = 2;
-            } else if (mode === '2v2') {
-                numPlayers = 4;
-            } else if (mode === '3v3') {
-                numPlayers = 6;
-            }
-
-            for (let i = 0; i < numPlayers; i++) {
-                const playerDiv = document.createElement('div');
-                playerDiv.className = 'player';
-                playerDiv.innerHTML = `
-                    <label for="player${i + 1}">Player ${i + 1}:</label>
-                    <input type="text" id="player${i + 1}" placeholder="Enter name">
-                `;
-                playersDiv.appendChild(playerDiv);
-            }
+        let numPlayers;
+        if (mode === '1v1') {
+            numPlayers = 2;
+        } else if (mode === '2v2') {
+            numPlayers = 4;
+        } else if (mode === '3v3') {
+            numPlayers = 6;
         }
 
-        function getPlayerNames() {
-            playerNames = [];
-            const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
-            for (let i = 0; i < numPlayers; i++) {
-                const playerName = document.getElementById(`player${i + 1}`).value;
-                playerNames.push(playerName);
-            }
+        for (let i = 0; i < numPlayers; i++) {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player';
+            playerDiv.innerHTML = `
+                <label for="player${i + 1}">Player ${i + 1}:</label>
+                <input type="text" id="player${i + 1}" placeholder="Enter name">
+            `;
+            playersDiv.appendChild(playerDiv);
+        }
+    }
+
+    function getPlayerNames() {
+        playerNames = [];
+        const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
+        for (let i = 0; i < numPlayers; i++) {
+            const playerName = document.getElementById(`player${i + 1}`).value;
+            playerNames.push(playerName);
+        }
+    }
+
+    function randomize() {
+        getPlayerNames();
+        shuffle(playerNames);
+        randomizedTeams = [...playerNames];
+        displayResults(randomizedTeams);
+        document.getElementById('revengeButton').disabled = false;
+        document.getElementById('copyButton').disabled = false;
+        document.getElementById('winningZonesButton').disabled = false;
+    }
+
+    function revenge() {
+        const team1 = randomizedTeams.slice(0, randomizedTeams.length / 2);
+        const team2 = randomizedTeams.slice(randomizedTeams.length / 2);
+        shuffle(team1);
+        shuffle(team2);
+        randomizedTeams = [...team1, ...team2];
+        displayResults(randomizedTeams);
+    }
+
+    function displayResults(teams) {
+        const resultDiv = document.getElementById('result');
+        const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
+        const randomMap = maps[Math.floor(Math.random() * maps.length)];
+        const selectedFactions = [];
+
+        for (let i = 0; i < numPlayers; i++) {
+            const randomFaction = factions[Math.floor(Math.random() * factions.length)];
+            selectedFactions.push(randomFaction);
         }
 
-        function randomize() {
-            getPlayerNames();
-            shuffle(playerNames);
-            randomizedTeams = [...playerNames];
-            displayResults(randomizedTeams);
-            document.getElementById('revengeButton').disabled = false;
+        let resultText = `Randomized Map: ${randomMap}\n\n`;
+        resultText += `Team 1:\n`;
+        for (let i = 0; i < numPlayers / 2; i++) {
+            resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}\n`;
+        }
+        resultText += `\nTeam 2:\n`;
+        for (let i = numPlayers / 2; i < numPlayers; i++) {
+            resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}\n`;
         }
 
-        function revenge() {
-            const team1 = randomizedTeams.slice(0, randomizedTeams.length / 2);
-            const team2 = randomizedTeams.slice(randomizedTeams.length / 2);
-            shuffle(team1);
-            shuffle(team2);
-            randomizedTeams = [...team1, ...team2];
-            displayResults(randomizedTeams);
+        resultDiv.innerText = resultText;
+
+        // Display the map image
+        const mapImageDiv = document.getElementById('mapImage');
+        mapImageDiv.innerHTML = `<img src="${mapImages[randomMap]}" alt="${randomMap}" style="max-width: 100%;">`;
+
+        // Prepare winning zones image
+        const winningZonesDiv = document.getElementById('winningZones');
+        winningZonesDiv.innerHTML = `<img src="${winningZoneImages[randomMap]}" alt="${randomMap} winning zones" style="max-width: 100%;">`;
+        winningZonesDiv.querySelector('img').style.display = 'none';
+    }
+
+    function showWinningZones() {
+        const winningZonesImg = document.getElementById('winningZones').querySelector('img');
+        winningZonesImg.style.display = 'block';
+    }
+
+    function copyTeams() {
+        const resultText = document.getElementById('result').innerText;
+        navigator.clipboard.writeText(resultText).then(() => {
+            alert('Teams copied to clipboard!');
+        }, (err) => {
+            alert('Failed to copy teams: ', err);
+        });
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
         }
+    }
 
-        function displayResults(teams) {
-            const resultDiv = document.getElementById('result');
-            const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
-            const randomMap = maps[Math.floor(Math.random() * maps.length)];
-            const selectedFactions = [];
-
-            for (let i = 0; i < numPlayers; i++) {
-                const randomFaction = factions[Math.floor(Math.random() * factions.length)];
-                selectedFactions.push(randomFaction);
-            }
-
-            let resultText = `Randomized Map: ${randomMap}\n\n`;
-            resultText += `Team 1:\n`;
-            for (let i = 0; i < numPlayers / 2; i++) {
-                resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}\n`;
-            }
-            resultText += `\nTeam 2:\n`;
-            for (let i = numPlayers / 2; i < numPlayers; i++) {
-                resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}\n`;
-            }
-
-            resultDiv.innerText = resultText;
-        }
-
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        // Initialize player inputs for the default game mode
-        updatePlayerInputs();
-    </script>
+    // Initialize player inputs for the default game mode
+    updatePlayerInputs();
+</script>
 </body>
 </html>
