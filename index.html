@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Napoleon Total War - Full Randomizer</title>
+    <title>Game Randomizer</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,19 +13,33 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-image: url('e7394af6b32d1bbc70ffe81cceb6a50d.jpg'); /* Reference to local image file */
+            background-image: url('e7394af6b32d1bbc70ffe81cceb6a50d.jpg');
             background-size: cover;
             background-position: center;
         }
         .container {
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(255, 255, 255, 0.9);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
             max-width: 800px;
             width: 100%;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         }
-        .game-mode {
+        .container.dark-mode {
+            background-color: rgba(33, 37, 41, 0.9);
+            color: white;
+        }
+        .container.dark-mode .form-control {
+            background-color: #495057;
+            color: white;
+            border: 1px solid #ced4da;
+        }
+        .container.dark-mode .btn {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .options {
             margin-bottom: 20px;
         }
         .player {
@@ -42,29 +57,71 @@
             max-width: 100%;
             margin-top: 10px;
         }
-        button {
-            margin: 5px;
+        .team-header {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .clocks {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .clock {
+            flex: 1;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>Napoleon Total War - Randomizer</h1>
+<div class="container" id="container">
+    <h1>Napoleon Total War: Multiplayer Randomizer</h1>
+    <div class="clocks">
+        <div class="clock">
+            <h3>Brasília</h3>
+            <div id="clockBrasilia"></div>
+        </div>
+        <div class="clock">
+            <h3>New York</h3>
+            <div id="clockNewYork"></div>
+        </div>
+        <div class="clock">
+            <h3>London</h3>
+            <div id="clockLondon"></div>
+        </div>
+        <div class="clock">
+            <h3>Moscow</h3>
+            <div id="clockMoscow"></div>
+        </div>
+        <div class="clock">
+            <h3>Tokyo</h3>
+            <div id="clockTokyo"></div>
+        </div>
+        <div class="clock">
+            <h3>Sydney</h3>
+            <div id="clockSydney"></div>
+        </div>
+    </div>
     <div class="game-mode">
         <label for="mode">Select Game Mode:</label>
-        <select id="mode" onchange="updatePlayerInputs()">
+        <select id="mode" class="form-control" onchange="updatePlayerInputs()">
             <option value="1v1">1 player versus 1 player</option>
             <option value="2v2">2 players versus 2 players</option>
             <option value="3v3">3 players versus 3 players</option>
         </select>
     </div>
-    <div id="players"></div>
-    <button onclick="randomize()">Randomize!</button>
-    <button id="revengeButton" onclick="revenge()" disabled>Revenge!</button>
-    <button id="copyButton" onclick="copyTeams()" disabled>Copy teams</button>
+    <div class="options mt-3">
+        <label><input type="checkbox" id="noCivilWar"> No civil war</label>
+        <label><input type="checkbox" id="balanceNations" onchange="showBalanceWarning()"> Balance nations</label>
+        <label><input type="checkbox" id="darkMode" onchange="toggleDarkMode()"> Dark mode</label>
+    </div>
+    <div id="balanceWarning" style="color: red; display: none;">Weaker factions will not be selected!</div>
+    <div id="players" class="mt-3"></div>
+    <button class="btn btn-primary mt-3" onclick="randomize()">Randomize!</button>
+    <button id="revengeButton" class="btn btn-secondary mt-3" onclick="revenge()" disabled>Revenge!</button>
+    <button id="copyButton" class="btn btn-info mt-3" onclick="copyTeams()" disabled>Copy teams</button>
     <div class="result" id="result"></div>
     <div class="map-image" id="mapImage"></div>
-    <button id="winningZonesButton" onclick="showWinningZones()" disabled>Check winning zones for this map!</button>
+    <button id="winningZonesButton" class="btn btn-warning mt-3" onclick="showWinningZones()" disabled>Check winning zones for this map!</button>
     <div class="winning-zones" id="winningZones"></div>
 </div>
 
@@ -73,6 +130,8 @@
         "France", "Spain", "Great Britain", "Portugal", "Sweden", "Ottoman Empire",
         "Denmark", "Austria", "Russia", "Prussia", "Netherlands"
     ];
+    const strongFactions = ["Great Britain", "Prussia", "France", "Ottoman Empire", "Portugal"];
+    const weakFactions = factions.filter(faction => !strongFactions.includes(faction));
     const maps = [
         "Amazon Confluence", "Aosta Valley", "Arid Cliffs", "Austrian Pinnacle",
         "Galician Ria", "Grassy Flatlands", "Homestead", "Italian Grassland",
@@ -81,7 +140,7 @@
         "Syrian Ridge", "Tabuk Mesa"
     ];
     const mapImages = {
-        "Amazon Confluence": "anazon-confluence.jpg",
+        "Amazon Confluence": "amazon-confluence.jpg",
         "Aosta Valley": "aosta-valley.jpg",
         "Arid Cliffs": "arid-cliffs.jpg",
         "Austrian Pinnacle": "austrian-pinnacle.jpg",
@@ -141,10 +200,12 @@
 
         for (let i = 0; i < numPlayers; i++) {
             const playerDiv = document.createElement('div');
-            playerDiv.className = 'player';
+            playerDiv.className = 'player input-group mb-3';
             playerDiv.innerHTML = `
-                <label for="player${i + 1}">Player ${i + 1}:</label>
-                <input type="text" id="player${i + 1}" placeholder="Enter name">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Player ${i + 1}</span>
+                </div>
+                <input type="text" id="player${i + 1}" class="form-control" placeholder="Enter name">
             `;
             playersDiv.appendChild(playerDiv);
         }
@@ -155,15 +216,25 @@
         const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
         for (let i = 0; i < numPlayers; i++) {
             const playerName = document.getElementById(`player${i + 1}`).value;
-            playerNames.push(playerName);
+            if (playerName) {
+                playerNames.push(playerName);
+            } else {
+                alert(`Please enter a name for Player ${i + 1}`);
+                return;
+            }
         }
     }
 
     function randomize() {
         getPlayerNames();
         shuffle(playerNames);
+
+        const noCivilWar = document.getElementById('noCivilWar').checked;
+        const balanceNations = document.getElementById('balanceNations').checked;
+
         randomizedTeams = [...playerNames];
-        displayResults(randomizedTeams);
+        displayResults(randomizedTeams, noCivilWar, balanceNations);
+
         document.getElementById('revengeButton').disabled = false;
         document.getElementById('copyButton').disabled = false;
         document.getElementById('winningZonesButton').disabled = false;
@@ -175,31 +246,37 @@
         shuffle(team1);
         shuffle(team2);
         randomizedTeams = [...team1, ...team2];
-        displayResults(randomizedTeams);
+        displayResults(randomizedTeams, false, false);
     }
 
-    function displayResults(teams) {
+    function displayResults(teams, noCivilWar, balanceNations) {
         const resultDiv = document.getElementById('result');
         const numPlayers = mode === '1v1' ? 2 : mode === '2v2' ? 4 : 6;
         const randomMap = maps[Math.floor(Math.random() * maps.length)];
         const selectedFactions = [];
 
+        let availableFactions = balanceNations ? [...strongFactions] : [...factions];
+
         for (let i = 0; i < numPlayers; i++) {
-            const randomFaction = factions[Math.floor(Math.random() * factions.length)];
-            selectedFactions.push(randomFaction);
+            let faction;
+            faction = availableFactions[Math.floor(Math.random() * availableFactions.length)];
+            if (noCivilWar) {
+                availableFactions = availableFactions.filter(f => f !== faction);
+            }
+            selectedFactions.push(faction);
         }
 
         let resultText = `Randomized Map: ${randomMap}\n\n`;
-        resultText += `Team 1:\n`;
+        resultText += `<div class="team-header">Team 1:</div>`;
         for (let i = 0; i < numPlayers / 2; i++) {
-            resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}\n`;
+            resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}<br>`;
         }
-        resultText += `\nTeam 2:\n`;
+        resultText += `<div class="team-header">Team 2:</div>`;
         for (let i = numPlayers / 2; i < numPlayers; i++) {
-            resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}\n`;
+            resultText += `Player ${i + 1} (${teams[i]}): ${selectedFactions[i]}<br>`;
         }
 
-        resultDiv.innerText = resultText;
+        resultDiv.innerHTML = resultText;
 
         // Display the map image
         const mapImageDiv = document.getElementById('mapImage');
@@ -231,6 +308,38 @@
             [array[i], array[j]] = [array[j], array[i]];
         }
     }
+
+    function showBalanceWarning() {
+        const balanceWarning = document.getElementById('balanceWarning');
+        const balanceNations = document.getElementById('balanceNations').checked;
+        balanceWarning.style.display = balanceNations ? 'block' : 'none';
+    }
+
+    function toggleDarkMode() {
+        const container = document.getElementById('container');
+        container.classList.toggle('dark-mode');
+    }
+
+    function updateClock(id, offset) {
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const time = new Date(utc + (3600000 * offset));
+        const hours = time.getHours().toString().padStart(2, '0');
+        const minutes = time.getMinutes().toString().padStart(2, '0');
+        const seconds = time.getSeconds().toString().padStart(2, '0');
+        document.getElementById(id).innerHTML = `${hours}:${minutes}:${seconds}`;
+    }
+
+    function updateClocks() {
+        updateClock('clockBrasilia', -3);
+        updateClock('clockNewYork', -4);
+        updateClock('clockLondon', 0);
+        updateClock('clockMoscow', 3);
+        updateClock('clockTokyo', 9);
+        updateClock('clockSydney', 10);
+    }
+
+    setInterval(updateClocks, 1000);
 
     // Initialize player inputs for the default game mode
     updatePlayerInputs();
